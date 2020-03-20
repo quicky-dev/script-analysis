@@ -14,12 +14,21 @@ class ScriptData():
         self.add_packages(packages)
 
     def size(self):
+        '''
+        returns an int indicating the number of packages this script contains
+        '''
         return len(self.packages)
 
     def add_package(self, package):
+        '''
+        add a single package name (string) to self.packages
+        '''
         self.packages.add(package)
 
     def add_packages(self, packages):
+        '''
+        add multiple packages (list of strings) to self.packages
+        '''
         for package in packages:
             self.add_package(package)
 
@@ -32,9 +41,16 @@ class ScriptInterpreter():
     It only requires a path to the script.
     Keep in mind if this is called from another directory, change the os
     directory before calling.
+
+    It can also take an optional path to a file with keywords to ignore that
+    the interpreter might mistake as packages names.
     '''
 
     def __init__(self, folder_path, ignore_path=None):
+        '''
+        initialize a ScriptInterpreter object with a folder path to its scripts
+        and an optinal path to ignore file.
+        '''
         self.folder_path = folder_path
         # array to store all script data objects
         self.data = []
@@ -75,6 +91,9 @@ class ScriptInterpreter():
             self.interpret_macos_file(file_path)
 
     def get_file_lines(self, path):
+        '''
+        given a file path, return a list of all lines (strings) in the file
+        '''
         f = open(path)
         lines = f.read().splitlines()
         f.close()
