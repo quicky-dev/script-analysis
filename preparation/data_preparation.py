@@ -65,9 +65,12 @@ class ScriptInterpreter():
         initialize a ScriptInterpreter object with a folder path to its scripts
         and an optinal path to ignore file.
         '''
+        # path to the scripts folder
         self.folder_path = folder_path
         # array to store all script data objects
         self.data = []
+        # create a set to store unique packages
+        self.unique_packages = set()
 
         # create a set to store packages that might accidentally be added by
         # the interpreter
@@ -76,7 +79,7 @@ class ScriptInterpreter():
         if ignore_path is not None:
             self.get_ignored_package_names(ignore_path)
 
-    def get_macos_files(self, path='scripts/macos/'):
+    def _get_macos_files(self, path='scripts/macos/'):
         '''
         retrieve all file paths from macos subdirectory and return a list of
         paths
@@ -86,7 +89,7 @@ class ScriptInterpreter():
         files = os.listdir(path)
         return [path + file_name for file_name in files]
 
-    def get_ubuntu_files(self, path='scripts/ubuntu/'):
+    def _get_ubuntu_files(self, path='scripts/ubuntu/'):
         '''
         retrieve all file paths from ubuntu subdirectory and return a list of
         paths
@@ -96,15 +99,7 @@ class ScriptInterpreter():
         files = os.listdir(path)
         return [path + file_name for file_name in files]
 
-    def read_macos_files(self):
-        '''
-        calls get_macos_files to get all macos file paths then calls
-        interpret_macos_file to convert each file to a ScriptData object.
-        '''
-        for file_path in self.get_macos_files():
-            self.interpret_macos_file(file_path)
-
-    def get_file_lines(self, path):
+    def _get_file_lines(self, path):
         '''
         given a file path, return a list of all lines (strings) in the file
         '''
@@ -112,6 +107,24 @@ class ScriptInterpreter():
         lines = f.read().splitlines()
         f.close()
         return lines
+
+    def read_macos_files(self):
+        '''
+        calls _get_macos_files to get all macos file paths then calls
+        interpret_macos_file to convert each file to a ScriptData object
+        containing the files packages.
+        '''
+        for file_path in self._get_macos_files():
+            self.interpret_macos_file(file_path)
+
+    def read_ubuntu_files(self):
+        '''
+        calls _get_ubuntu_files to get all ubuntu file paths then calls
+        interpret_ubuntu_file to convert each file to a ScriptData object
+        containing the files packages.
+        '''
+        for file_path in self._get_ubuntu_files():
+            self.interpret_ubuntu_file(file_path)
 
     def interpret_macos_file(self, path):
         '''
@@ -127,7 +140,7 @@ class ScriptInterpreter():
         self.data.append(script_data)
 
         # get all lines from the file
-        lines = self.get_file_lines(path)
+        lines = self._get_file_lines(path)
         for line in lines:
             # if the line is empty continue
             if len(line) == 0:
@@ -143,6 +156,9 @@ class ScriptInterpreter():
             # if the package name should be ignored continue
             if package in self.ignore:
                 continue
+
+            # add the package to unique_packages set
+            self.unique_packages.add(package)
             # add the package to script_data object once it passes all filters
             script_data.add_package(package)
 
@@ -160,7 +176,7 @@ class ScriptInterpreter():
         self.data.append(script_data)
 
         # get all lines from the file
-        lines = self.get_file_lines(path)
+        lines = self._get_file_lines(path)
         for line in lines:
             # if the line is empty continue
             if len(line) == 0:
@@ -174,6 +190,9 @@ class ScriptInterpreter():
             # if the package name should be ignored continue
             if package in self.ignore:
                 continue
+
+            # add the package to unique_packages set
+            self.unique_packages.add(package)
             # add the package to script_data object once it passes all filters
             script_data.add_package(package)
 
@@ -183,7 +202,7 @@ class ScriptInterpreter():
         ignore or package names that are mistaken as packages by the
         interpreter
         '''
-        for package_name in self.get_file_lines(ignore_path):
+        for package_name in self._get_file_lines(ignore_path):
             self.ignore.add(package_name)
 
 
@@ -192,15 +211,18 @@ def test_interpret(test_type, index=0):
     test the interpreter on a file, and see the results it gives.
     this test cant be checked by a computer but can with the human eye.
     it will print out the lines of a script and then the packages it retrieves.
+
+    testing requires a folder in the same directory as this function call. The
+    folder should be called scripts with a subfolder called macos or ubuntu.
     '''
     assert test_type == 'MACOS' or test_type == 'UBUNTU'
 
     s = ScriptInterpreter('hello', 'ignore.txt')
 
     if test_type == 'MACOS':
-        files = s.get_macos_files()
+        files = s._get_macos_files()
     if test_type == 'UBUNTU':
-        files = s.get_ubuntu_files()
+        files = s._get_ubuntu_files()
 
     # report if the index is out of range
     if index >= len(files):
@@ -214,7 +236,7 @@ def test_interpret(test_type, index=0):
         s.interpret_ubuntu_file(files[index])
 
     # print the file lines to the console
-    lines = s.get_file_lines(files[index])
+    lines = s._get_file_lines(files[index])
     [print(line) for line in lines]
 
     # print out the retrieved packages
