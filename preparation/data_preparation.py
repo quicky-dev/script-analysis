@@ -12,12 +12,26 @@ class ScriptData():
         '''
         self.packages = set()
         self.add_packages(packages)
+        self.os_type = None
 
     def size(self):
         '''
         returns an int indicating the number of packages this script contains
         '''
         return len(self.packages)
+
+    def set_os_type(self, os_type):
+        '''
+        set the os type of this scripts data
+        '''
+        self.os_type = os_type
+
+    def contains(self, package):
+        '''
+        given a package (string), return a boolean indicating whether
+        it exists in self.packages
+        '''
+        return package in self.packages
 
     def add_package(self, package):
         '''
@@ -107,6 +121,8 @@ class ScriptInterpreter():
         '''
         # create a script data object to store the scrips data
         script_data = ScriptData()
+        # set the type to macos
+        script_data.set_os_type('macos')
         # add the script data object to self.data
         self.data.append(script_data)
 
@@ -136,7 +152,30 @@ class ScriptInterpreter():
         ScriptData object that contains the data from the file, then add the
         data to self.data.
         '''
-        pass
+        # create a script data object to store the scrips data
+        script_data = ScriptData()
+        # set the type to ubuntu
+        script_data.set_os_type('ubuntu')
+        # add the script data object to self.data
+        self.data.append(script_data)
+
+        # get all lines from the file
+        lines = self.get_file_lines(path)
+        for line in lines:
+            # if the line is empty continue
+            if len(line) == 0:
+                continue
+            if 'sudo' not in line:
+                continue
+            if 'install' not in line:
+                continue
+            # get the name of the package
+            package = line.split(' ')[-1]
+            # if the package name should be ignored continue
+            if package in self.ignore:
+                continue
+            # add the package to script_data object once it passes all filters
+            script_data.add_package(package)
 
     def get_ignored_package_names(self, ignore_path):
         '''
@@ -148,12 +187,41 @@ class ScriptInterpreter():
             self.ignore.add(package_name)
 
 
-if __name__ == '__main__':
-    s = ScriptInterpreter('hello')
-    ubuntu_files = s.get_ubuntu_files()
-    lines = s.get_file_lines(ubuntu_files[0])
+def test_interpret(test_type, index=0):
+    '''
+    test the interpreter on a file, and see the results it gives.
+    this test cant be checked by a computer but can with the human eye.
+    it will print out the lines of a script and then the packages it retrieves.
+    '''
+    assert test_type == 'MACOS' or test_type == 'UBUNTU'
+
+    s = ScriptInterpreter('hello', 'ignore.txt')
+
+    if test_type == 'MACOS':
+        files = s.get_macos_files()
+    if test_type == 'UBUNTU':
+        files = s.get_ubuntu_files()
+
+    # report if the index is out of range
+    if index >= len(files):
+        print(f'Index out of range. Max index: {len(files) - 1}')
+        return
+
+    # have the interpreter class interpret the first file
+    if test_type == 'MACOS':
+        s.interpret_macos_file(files[index])
+    if test_type == 'UBUNTU':
+        s.interpret_ubuntu_file(files[index])
+
+    # print the file lines to the console
+    lines = s.get_file_lines(files[index])
     [print(line) for line in lines]
-    # s.interpret_macos_file(macos_files[0])
-    # print()
-    # print('Retrieved packages:')
-    # [print(package) for package in s.data[0].packages]
+
+    # print out the retrieved packages
+    print()
+    print('Retrieved packages:')
+    [print(package) for package in s.data[0].packages]
+
+
+if __name__ == '__main__':
+    test_interpret('UBUNTU')
