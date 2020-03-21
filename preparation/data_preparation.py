@@ -60,13 +60,11 @@ class ScriptInterpreter():
     the interpreter might mistake as packages names.
     '''
 
-    def __init__(self, folder_path, ignore_path=None):
+    def __init__(self, ignore_path=None):
         '''
         initialize a ScriptInterpreter object with a folder path to its scripts
         and an optinal path to ignore file.
         '''
-        # path to the scripts folder
-        self.folder_path = folder_path
         # array to store all script data objects
         self.data = []
         # create a set to store unique packages
@@ -79,7 +77,7 @@ class ScriptInterpreter():
         if ignore_path is not None:
             self.get_ignored_package_names(ignore_path)
 
-    def _get_macos_files(self, path='scripts/macos/'):
+    def _get_macos_script_paths(self, path):
         '''
         retrieve all file paths from macos subdirectory and return a list of
         paths
@@ -89,7 +87,7 @@ class ScriptInterpreter():
         files = os.listdir(path)
         return [path + file_name for file_name in files]
 
-    def _get_ubuntu_files(self, path='scripts/ubuntu/'):
+    def _get_ubuntu_script_paths(self, path):
         '''
         retrieve all file paths from ubuntu subdirectory and return a list of
         paths
@@ -108,22 +106,22 @@ class ScriptInterpreter():
         f.close()
         return lines
 
-    def read_macos_files(self):
+    def read_macos_files(self, path):
         '''
-        calls _get_macos_files to get all macos file paths then calls
+        calls _get_macos_script_paths to get all macos file paths then calls
         interpret_macos_file to convert each file to a ScriptData object
         containing the files packages.
         '''
-        for file_path in self._get_macos_files():
+        for file_path in self._get_macos_script_paths(path):
             self.interpret_macos_file(file_path)
 
-    def read_ubuntu_files(self):
+    def read_ubuntu_files(self, path):
         '''
-        calls _get_ubuntu_files to get all ubuntu file paths then calls
+        calls _get_ubuntu_script_paths to get all ubuntu file paths then calls
         interpret_ubuntu_file to convert each file to a ScriptData object
         containing the files packages.
         '''
-        for file_path in self._get_ubuntu_files():
+        for file_path in self._get_ubuntu_script_paths(path):
             self.interpret_ubuntu_file(file_path)
 
     def interpret_macos_file(self, path):
@@ -211,18 +209,15 @@ def test_interpret(test_type, index=0):
     test the interpreter on a file, and see the results it gives.
     this test cant be checked by a computer but can with the human eye.
     it will print out the lines of a script and then the packages it retrieves.
-
-    testing requires a folder in the same directory as this function call. The
-    folder should be called scripts with a subfolder called macos or ubuntu.
     '''
     assert test_type == 'MACOS' or test_type == 'UBUNTU'
 
-    s = ScriptInterpreter('hello', 'ignore.txt')
+    s = ScriptInterpreter('ignore.txt')
 
     if test_type == 'MACOS':
-        files = s._get_macos_files()
+        files = s._get_macos_script_paths('scripts/macos')
     if test_type == 'UBUNTU':
-        files = s._get_ubuntu_files()
+        files = s._get_ubuntu_script_paths('scripts/ubuntu')
 
     # report if the index is out of range
     if index >= len(files):
